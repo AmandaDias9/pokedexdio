@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Pokédex Dio</title>
+<style>
+  /* Reset básico */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    color: #333;
+    user-select: none;
+  }
+  header {
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+    margin-bottom: 15px;
+  }
+  header h1 {
+    font-weight: 700;
+    font-size: 2.2rem;
+    color: #ef5350;
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 2px #b71c1c;
+    margin-bottom: 8px;
+  }
+  #search-bar {
+    width: 100%;
+    max-width: 360px;
+    margin-bottom: 15px;
+    position: relative;
+  }
+  #search-bar input {
+    width: 100%;
+    padding: 12px 15px 12px 40px;
+    border: none;
+    border-radius: 30px;
+    font-size: 1rem;
+    box-shadow: 0 2px 6px rgba(239, 83, 80, 0.3);
+    transition: box-shadow 0.3s ease;
+  }
+  #search-bar input:focus {
+    outline: none;
+    box-shadow: 0 2px 12px rgba(239, 83, 80, 0.6);
+  }
+  #search-bar svg {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    fill: #ef5350;
+    width: 20px;
+    height: 20px;
+  }
+  main {
+    flex-grow: 1;
+    width: 100%;
+    max-width: 360px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+    gap: 12px;
+    margin-bottom: 10px;
+    overflow-y: auto;
+    max-height: 520px;
+    padding-right: 6px;
+  }
+  main::-webkit-scrollbar {
+    width: 6px;
+  }
+  main::-webkit-scrollbar-track {
+    background: #f5f7fa;
+  }
+  main::-webkit-scrollbar-thumb {
+    background-color: #ef5350;
+    border-radius: 3px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 8px rgba(239, 83, 80, 0.2);
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.2s ease;
+    user-select: none;
+  }
+  .card:active {
+    transform: scale(0.97);
+  }
+  .card .number {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #777;
+  }
+  .card .name {
+    font-weight: 700;
+    color: #ef5350;
+    font-size: 1.1rem;
+    text-transform: capitalize;
+    margin: 5px 0 8px 0;
+  }
+  .card img {
+    width: 80px;
+    height: 80px;
+    image-rendering: pixelated;
+  }
+  .types {
+    display: flex;
+    gap: 6px;
+  }
+  .type {
+    font-size: 0.75rem;
+    text-transform: capitalize;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-weight: 700;
+    user-select: none;
+  }
+
+  /* Cores dos tipos */
+  .type.normal { background: #A8A77A; }
+  .type.fire { background: #EE8130; }
+  .type.water { background: #6390F0; }
+  .type.electric { background: #F7D02C; }
+  .type.grass { background: #7AC74C; }
+  .type.ice { background: #96D9D6; }
+  .type.fighting { background: #C22E28; }
+  .type.poison { background: #A33EA1; }
+  .type.ground { background: #E2BF65; }
+  .type.flying { background: #A98FF3; }
+  .type.psychic { background: #F95587; }
+  .type.bug { background: #A6B91A; }
+  .type.rock { background: #B6A136; }
+  .type.ghost { background: #735797; }
+  .type.dragon { background: #6F35FC; }
+  .type.dark { background: #705746; }
+  .type.steel { background: #B7B7CE; }
+  .type.fairy { background: #D685AD; }
+
+  /* Modal estilo */
+  #modal {
+    position: fixed;
+    display: none;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 20;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+  }
+  #modal.active {
+    display: flex;
+  }
+  #modal .modal-content {
+    background: white;
+    border-radius: 20px;
+    max-width: 360px;
+    width: 100%;
+    padding: 20px;
+    box-shadow: 0 8px 20px rgba(239, 83, 80, 0.4);
+    overflow-y: auto;
+    max-height: 560px;
+    position: relative;
+  }
+  #modal .close-btn {
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    cursor: pointer;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ef5350;
+    user-select: none;
+  }
+  #modal .pokemon-image {
+    display: block;
+    margin: 0 auto 15px auto;
+    width: 150px;
+    height: 150px;
+    image-rendering: pixelated;
+  }
+  #modal h2 {
+    font-size: 1.7rem;
+    text-align: center;
+    color: #ef5350;
+    text-transform: capitalize;
+  }
+  #modal .info {
+    margin-top: 15px;
+    font-size: 1rem;
+    color: #444;
+  }
+  #modal .info strong {
+    color: #e53935;
+  }
+  #modal .stats {
+    margin-top: 12px;
+  }
+  #modal .stat {
+    display: flex;
+    justify-content: space-between;
+    margin: 4px 0;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pokédex Dio</h1>
+</header>
+<div id="search-bar">
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M21.71 20.29l-3.387-3.387a7.94 7.94 0 001.67-5.31 8 8 0 10-8 8 7.94 7.94 0 005.31-1.67l3.387 3.387a1 1 0 001.414-1.414zM4 10a6 6 0 116 6 6 6 0 01-6-6z"/></svg>
+  <input type="text" id="search-input" placeholder="Buscar por nome ou número..." autocomplete="off" />
+</div>
+<main id="pokemon-list" aria-live="polite" aria-label="Lista de Pokémons">
+  <!-- Cards serão injetados aqui -->
+</main>
+
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-content">
+    <div class="close-btn" aria-label="Fechar">&times;</div>
+    <img src="" alt="" class="pokemon-image" />
+    <h2 id="modal-title"></h2>
+    <div class="types"></div>
+    <div class="info"></div>
+    <div class="stats"></div>
+  </div>
+</div>
+
+<script>
+  const pokemonList = document.getElementById('pokemon-list');
+  const searchInput = document.getElementById('search-input');
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalImage = modal.querySelector('.pokemon-image');
+  const modalTypes = modal.querySelector('.types');
+  const modalInfo = modal.querySelector('.info');
+  const modalStats = modal.querySelector('.stats');
+  const modalCloseBtn = modal.querySelector('.close-btn');
+
+  const maxPokemons = 151; // Limitar a primeira geração para desempenho
+  let allPokemons = [];
+
+  // Mapear tipos para cores para modal
+  const typeColors = {
+    normal: '#A8A77A',
+    fire: '#EE8130',
+    water: '#6390F0',
+    electric: '#F7D02C',
+    grass: '#7AC74C',
+    ice: '#96D9D6',
+    fighting: '#C22E28',
+    poison: '#A33EA1',
+    ground: '#E2BF65',
+    flying: '#A98FF3',
+    psychic: '#F95587',
+    bug: '#A6B91A',
+    rock: '#B6A136',
+    ghost: '#735797',
+    dragon: '#6F35FC',
+    dark: '#705746',
+    steel: '#B7B7CE',
+    fairy: '#D685AD',
+  };
+
+  // Função para buscar dados básicos dos Pokémon da PokeAPI
+  async function fetchPokemonList() {
+    const url = `https://pokeapi.co/api/v2/pokemon?limit=${maxPokemons}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data.results;
+  }
+
+  // Buscar dados detalhados do Pokémon
+  async function fetchPokemonData(url) {
+    try {
+      const res = await fetch(url);
+      return await res.json();
+    } catch (err) {
+      console.error('Erro ao buscar dados do Pokémon', err);
+      return null;
+    }
+  }
+
+  // Criar card do Pokémon
+  function createPokemonCard(pokemon) {
+    const card = document.createElement('article');
+    card.classList.add('card');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `Ver detalhes do Pokémon ${pokemon.name}`);
+
+    card.innerHTML = `
+      <div class="number">#${pokemon.id.toString().padStart(3, '0')}</div>
+      <img src="${pokemon.sprites.front_default || ''}" alt="${pokemon.name} imagem" />
+      <div class="name">${pokemon.name}</div>
+      <div class="types">
+        ${pokemon.types.map(t => `<span class="type ${t.type.name}">${t.type.name}</span>`).join('')}
+      </div>
+    `;
+
+    // Abrir modal com detalhes ao clicar ou tecla enter
+    card.addEventListener('click', () => openModal(pokemon));
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openModal(pokemon);
+      }
+    });
+
+    return card;
+  }
+
+  // Abrir modal com detalhes do Pokémon
+  function openModal(pokemon) {
+    modalTitle.textContent = `${pokemon.name} (#${pokemon.id.toString().padStart(3, '0')})`;
+    modalImage.src = pokemon.sprites.other['official-artwork'].front_default || pokemon.sprites.front_default || '';
+    modalImage.alt = `${pokemon.name} imagem grande`;
+
+    // Limpar tipos, info e stats
+    modalTypes.innerHTML = '';
+    modalInfo.innerHTML = `
+      <p><strong>Altura:</strong> ${(pokemon.height / 10).toFixed(1)} m</p>
+      <p><strong>Peso:</strong> ${(pokemon.weight / 10).toFixed(1)} kg</p>
+      <p><strong>Habilidades:</strong> ${pokemon.abilities.map(a => a.ability.name).join(', ')}</p>
+    `;
+    modalStats.innerHTML = pokemon.stats.map(stat => `
+      <div class="stat">
+        <span>${stat.stat.name.replace('special-', 'SP. ').toUpperCase()}</span>
+        <span>${stat.base_stat}</span>
+      </div>
+    `).join('');
+
+    // Mostrar tipos coloridos
+    pokemon.types.forEach(t => {
+      const span = document.createElement('span');
+      span.classList.add('type');
+      span.textContent = t.type.name;
+      span.style.backgroundColor = typeColors[t.type.name] || '#777';
+      modalTypes.appendChild(span);
+    });
+
+    modal.classList.add('active');
+    // para a rolagem do fundo
+    document.body.style.overflow = 'hidden';
+    modalCloseBtn.focus();
+  }
+
+  // Fechar modal
+  function closeModal() {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  // Filtrar pokémon pelo input
+  function filterPokemons(term) {
+    const filtered = allPokemons.filter(p => {
+      return p.name.toLowerCase().includes(term) || p.id.toString() === term;
+    });
+    renderPokemons(filtered);
+  }
+
+  // Renderizar cards
+  function renderPokemons(pokemons) {
+    pokemonList.innerHTML = '';
+    if (pokemons.length === 0) {
+      pokemonList.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#ef5350;">Nenhum Pokémon encontrado.</p>';
+      return;
+    }
+    pokemons.forEach(p => {
+      const card = createPokemonCard(p);
+      pokemonList.appendChild(card);
+    });
+  }
+
+  // Inicialização
+  async function init() {
+    const basicList = await fetchPokemonList();
+    // Buscar dados detalhados paralelamente, limitando requisições simultâneas
+    let detailedPokemons = [];
+    const batchSize = 20;
+
+    for (let i = 0; i < basicList.length; i += batchSize) {
+      const batch = basicList.slice(i, i + batchSize);
+      const promises = batch.map(p => fetchPokemonData(p.url));
+      const results = await Promise.all(promises);
+      detailedPokemons = detailedPokemons.concat(results.filter(r => r));
+      // atualizar a lista completa e renderizar progressivamente
+      allPokemons = detailedPokemons;
+      renderPokemons(allPokemons);
+    }
+  }
+
+  searchInput.addEventListener('input', e => {
+    const term = e.target.value.trim().toLowerCase();
+    filterPokemons(term);
+  });
+
+  modalCloseBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', e => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal.classList.contains('active')) {
+      closeModal();
+    }
+  });
+
+  // Start
+  init();
+</script>
+<footer class="rodape">
+        <p class="rodape__texto">Desenvolvido por Amanda Dias©</p>
+    </footer>
+</body>
+</html>
+
